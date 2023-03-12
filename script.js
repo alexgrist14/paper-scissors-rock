@@ -12,6 +12,17 @@ class Game{
         return this.moves[randomIndex];
     }
 
+    getMathResult(userTurn, computerTurn){
+        const diff = (computerTurn - userTurn + moves.length) % moves.length;
+        if(diff === 0){
+            return 'Tie';
+        } else if(diff <= (moves.length) / 2){
+            return 'You win!';
+        }else{
+            return 'Computer wins!';
+        }
+    }
+
 }
 
 class SecretKey{
@@ -40,9 +51,9 @@ class Table{
 
 function startGame(){
     if(moves.length < 3){
-        console.log('The number of arguments must be more than 2');
+        console.log('Number of arguments must be more than 2');
     }else if(moves.length%2 === 0){
-        console.log('The number of arguments must be odd')
+        console.log('Number of arguments must be odd')
     }else{
         const newKey = new SecretKey();
         const key = newKey.generateRandomKey();
@@ -64,7 +75,10 @@ function startGame(){
         });
 
         rl.question('Enter your move: ', (name) => {
-            console.log(`Your move, ${moves[Number(name-1)]}!`);
+            console.log(`Your move: ${moves[Number(name-1)]}`);
+            console.log(`Computer move: ${randomTurn}`);
+            console.log(newGame.getMathResult(+name,moves.indexOf(randomTurn) + 1))
+            console.log(`HMAC key: ${key}`);
             rl.close();
         });
     }
