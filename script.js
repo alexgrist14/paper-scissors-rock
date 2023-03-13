@@ -12,14 +12,14 @@ class Game{
         return this.moves[randomIndex];
     }
 
-    getMathResult(userTurn, computerTurn){
-        const diff = (computerTurn - userTurn + moves.length) % moves.length;
+    getGameResult(userTurn, computerTurn,winMessage = 'You win!',loseMessage='Computer wins!'){
+        const diff = (computerTurn - userTurn + this.moves.length) % this.moves.length;
         if(diff === 0){
-            return 'Tie';
-        } else if(diff <= (moves.length) / 2){
-            return 'You win!';
+            return 'Draw';
+        } else if(diff <= moves.length / 2){
+            return winMessage;
         }else{
-            return 'Computer wins!';
+            return loseMessage;
         }
     }
 
@@ -43,17 +43,29 @@ class Hmac{
 }
 
 class Table{
-    showTable(){
-
+    showTable(moves){
+        const newGame = new Game(moves);
+        const matrix =[];
+        for (let i = 0; i < moves.length; i++) {
+            const row = {};
+            for (let j = 0; j < moves.length; j++) {
+                row[moves[j]] = newGame.getGameResult(i, j, 'Win', 'Lose');
+            }
+            matrix.push(row);
+        }
+        const newMatrix = matrix.map((obj,index) => ({" ":moves[index], ...obj}));
+        console.table(newMatrix);
     }
 }
 
 
 function startGame(){
-    if(moves.length < 3){
-        console.log('Number of arguments must be more than 2');
+    if(hasDuplicates(moves)){
+        console.log('Values should not be the same');
+    }else if(moves.length < 3){
+        console.log('Number of arguments must be more than 2. Example: rock paper scissors');
     }else if(moves.length%2 === 0){
-        console.log('Number of arguments must be odd')
+        console.log('Number of arguments must be odd(>2). Example: rock paper scissors');
     }else{
         const newKey = new SecretKey();
         const key = newKey.generateRandomKey();
@@ -74,14 +86,42 @@ function startGame(){
             output: process.stdout
         });
 
-        rl.question('Enter your move: ', (name) => {
-            console.log(`Your move: ${moves[Number(name-1)]}`);
-            console.log(`Computer move: ${randomTurn}`);
-            console.log(newGame.getMathResult(+name,moves.indexOf(randomTurn) + 1))
-            console.log(`HMAC key: ${key}`);
-            rl.close();
-        });
+        function askForMove(){
+            rl.question('Enter your move: ', (number) => {
+                const move = moves[Number(number-1)];
+                if(number === '0') {
+                    rl.close();
+                }else if(number === '?'){
+                    const newTable = new Table();
+                    newTable.showTable(moves);
+                    askForMove();
+                }
+                else if(!move){
+                    console.log(`You must input correct value`);
+                    askForMove();
+                }
+                else{
+                    console.log(`Your move: ${move}`);
+                    console.log(`Computer move: ${randomTurn}`);
+                    console.log(newGame.getGameResult(+number,moves.indexOf(randomTurn) + 1))
+                    console.log(`HMAC key: ${key}`);
+                    rl.close();
+                }
+            });
+        }
+
+        askForMove();
     }
+}
+
+function hasDuplicates(arr){
+    for(let i =0; i<arr.length; i++){
+        for(let j = i+1; j<arr.length; j++){
+            if(arr[i] === arr[j])
+                return true;
+        }
+    }
+    return false;
 }
 
 startGame();
