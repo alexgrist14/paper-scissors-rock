@@ -97,58 +97,57 @@ function showAvailableMoves() {
 }
 
 function startGame() {
-    try {
-        validateInput(moves);
+    validateInput(moves);
 
-        const secretKey = new SecretKey();
-        const key = secretKey.generateRandomKey();
-        const game = new Game(moves);
-        const randomTurn = game.makeRandomTurn();
-        const hmac = new Hmac(randomTurn, key);
-        const hmacHash = hmac.createHmac();
+    const secretKey = new SecretKey();
+    const key = secretKey.generateRandomKey();
+    const game = new Game(moves);
+    const randomTurn = game.makeRandomTurn();
+    const hmac = new Hmac(randomTurn, key);
+    const hmacHash = hmac.createHmac();
 
-        console.log(`HMAC: ${hmacHash}`);
-        console.log('Available moves:');
+    console.log(`HMAC: ${hmacHash}`);
+    console.log('Available moves:');
 
-        showAvailableMoves();
+    showAvailableMoves();
 
-        console.log('0 - exit\n? - help');
+    console.log('0 - exit\n? - help');
 
-        const rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    function askForMove() {
+        rl.question('Enter your move: ', (number) => {
+
+            const move = moves[Number(number - 1)];
+
+            if (number === '0') {
+                rl.close();
+            } else if (number === '?') {
+                const table = new Table(game);
+                table.showTable(moves);
+                askForMove();
+            } else if (!move) {
+                console.log(`You must input correct value`);
+                askForMove();
+            } else {
+                console.log(`Your move: ${move}`);
+                console.log(`Computer move: ${randomTurn}`);
+                console.log(game.getGameResult(+number, moves.indexOf(randomTurn) + 1))
+                console.log(`HMAC key: ${key}`);
+
+                rl.close();
+            }
         });
-
-        function askForMove() {
-            rl.question('Enter your move: ', (number) => {
-
-                const move = moves[Number(number - 1)];
-
-                if (number === '0') {
-                    rl.close();
-                } else if (number === '?') {
-                    const table = new Table(game);
-                    table.showTable(moves);
-                    askForMove();
-                } else if (!move) {
-                    console.log(`You must input correct value`);
-                    askForMove();
-                } else {
-                    console.log(`Your move: ${move}`);
-                    console.log(`Computer move: ${randomTurn}`);
-                    console.log(game.getGameResult(+number, moves.indexOf(randomTurn) + 1))
-                    console.log(`HMAC key: ${key}`);
-
-                    rl.close();
-                }
-            });
-        }
-
-        askForMove();
     }
-    catch (err){
-        console.log(err.message);
-    }
+
+    askForMove();
 }
 
-startGame();
+try {
+    startGame();
+} catch (err) {
+    console.log(err.message);
+}
