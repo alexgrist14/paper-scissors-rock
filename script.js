@@ -68,17 +68,17 @@ function hasDuplicates(arr) {
 }
 
 const dublicateValidator = {
-    isValid: (moves) => hasDuplicates(moves),
+    isValid: (moves) => !hasDuplicates(moves),
     message: 'Values should not be the same',
 }
 
 const lengthValidator = {
-    isValid: (moves) => moves.length < 3,
+    isValid: (moves) => !(moves.length < 3),
     message: 'Number of arguments must be more than 2. Example: rock paper scissors',
 }
 
 const oddValidator = {
-    isValid: (moves) => moves.length % 2 === 0,
+    isValid: (moves) => !(moves.length % 2 === 0),
     message: 'Number of arguments must be odd(3 or 5, etc.). Example: rock paper scissors',
 }
 
@@ -86,7 +86,7 @@ const validators = [dublicateValidator, lengthValidator, oddValidator];
 
 function validateInput(moves) {
     validators.forEach(({isValid, message}) => {
-        if (isValid(moves)) throw new Error(message);
+        if (!isValid(moves)) throw new Error(message);
     })
 }
 
@@ -97,53 +97,58 @@ function showAvailableMoves() {
 }
 
 function startGame() {
-    validateInput(moves);
+    try {
+        validateInput(moves);
 
-    const secretKey = new SecretKey();
-    const key = secretKey.generateRandomKey();
-    const game = new Game(moves);
-    const randomTurn = game.makeRandomTurn();
-    const hmac = new Hmac(randomTurn, key);
-    const hmacHash = hmac.createHmac();
+        const secretKey = new SecretKey();
+        const key = secretKey.generateRandomKey();
+        const game = new Game(moves);
+        const randomTurn = game.makeRandomTurn();
+        const hmac = new Hmac(randomTurn, key);
+        const hmacHash = hmac.createHmac();
 
-    console.log(`HMAC: ${hmacHash}`);
-    console.log('Available moves:');
+        console.log(`HMAC: ${hmacHash}`);
+        console.log('Available moves:');
 
-    showAvailableMoves();
+        showAvailableMoves();
 
-    console.log('0 - exit\n? - help');
+        console.log('0 - exit\n? - help');
 
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-
-    function askForMove() {
-        rl.question('Enter your move: ', (number) => {
-
-            const move = moves[Number(number - 1)];
-
-            if (number === '0') {
-                rl.close();
-            } else if (number === '?') {
-                const table = new Table(game);
-                table.showTable(moves);
-                askForMove();
-            } else if (!move) {
-                console.log(`You must input correct value`);
-                askForMove();
-            } else {
-                console.log(`Your move: ${move}`);
-                console.log(`Computer move: ${randomTurn}`);
-                console.log(game.getGameResult(+number, moves.indexOf(randomTurn) + 1))
-                console.log(`HMAC key: ${key}`);
-
-                rl.close();
-            }
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout
         });
-    }
 
-    askForMove();
+        function askForMove() {
+            rl.question('Enter your move: ', (number) => {
+
+                const move = moves[Number(number - 1)];
+
+                if (number === '0') {
+                    rl.close();
+                } else if (number === '?') {
+                    const table = new Table(game);
+                    table.showTable(moves);
+                    askForMove();
+                } else if (!move) {
+                    console.log(`You must input correct value`);
+                    askForMove();
+                } else {
+                    console.log(`Your move: ${move}`);
+                    console.log(`Computer move: ${randomTurn}`);
+                    console.log(game.getGameResult(+number, moves.indexOf(randomTurn) + 1))
+                    console.log(`HMAC key: ${key}`);
+
+                    rl.close();
+                }
+            });
+        }
+
+        askForMove();
+    }
+    catch (err){
+        console.log(err.message);
+    }
 }
 
 startGame();
